@@ -1,0 +1,80 @@
+---
+description: Clerk auth and user data isolation rules
+alwaysApply: true
+---
+
+# Auth & Data Access
+
+All authentication is handled by [Clerk](https://clerk.com/). Users must only ever be able to read or mutate their own data.
+
+## Getting the Current User
+
+In Server Components and Route Handlers, use Clerk's `auth()` helper. Always guard against unauthenticated access.
+
+```ts
+import { auth } from "@clerk/nextjs/server";
+
+const { userId } = await auth();
+if (!userId) {
+  // redirect or return 401
+}
+```
+
+## Scoping Database Queries
+
+Every query that touches user-owned data **must** filter by `clerkUserId`. Never fetch a row by `id` alone without also asserting ownership.
+
+```ts
+// ✅ GOOD — ownership enforced
+const deck = await db
+  .select()
+  .from(decksTable)
+  .where(and(eq(decksTable.id, deckId), eq(decksTable.clerkUserId, userId)))
+  .then((rows) => rows[0]);
+
+// ❌ BAD — any user can fetch any deck by id
+const deck = await db
+  .select()
+  .from(decksTable)
+  .where(eq(decksTable.id, deckId))
+  .then((rows) => rows[0]);
+```
+
+## Mutations
+
+For `update` and `delete`, always include `clerkUserId` in the `where` clause so a user cannot modify another user's rows even if they guess an id.
+
+```ts
+// ✅ GOOD
+await db
+  .update(decksTable)
+  .set({ name })
+  .where(and(eq(decksTable.id, deckId), eq(decksTable.clerkUserId, userId)));
+
+await db
+  .delete(decksTable)
+  .where(and(eq(decksTable.id, deckId), eq(decksTable.clerkUserId, userId)));
+```
+
+## Indirect Ownership (cards)
+
+`cardsTable` has no `clerkUserId` — ownership is asserted through the parent deck. Before operating on a card, verify the parent deck belongs to the current user.
+
+```ts
+// ✅ GOOD — verify deck ownership before touching its cards
+const deck = await db.query.decksTable.findFirst({
+  where: and(eq(decksTable.id, deckId), eq(decksTable.clerkUserId, userId)),
+});
+if (!deck) throw new Error("Not found");
+
+await db.delete(cardsTable).where(eq(cardsTable.id, cardId));
+```
+
+## Inserts
+
+Always stamp new rows with the current user's `clerkUserId`.
+
+```ts
+// ✅ GOOD
+await db.insert(decksTable).values({ clerkUserId: userId, name, description });
+```

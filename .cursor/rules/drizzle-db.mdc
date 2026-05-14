@@ -1,0 +1,55 @@
+---
+description: Database interactions must use Drizzle ORM schema and queries
+globs: **/*.ts,**/*.tsx
+alwaysApply: false
+---
+
+# Database: Drizzle ORM
+
+All database interactions must use the Drizzle schema and query builder. Never use raw SQL strings or any other ORM/query library.
+
+## Schema
+
+Tables are defined in [src/db/schema.ts](mdc:src/db/schema.ts):
+
+- `decksTable` — `id`, `clerkUserId`, `name`, `description`, `createdAt`, `updatedAt`
+- `cardsTable` — `id`, `deckId` (FK → decks), `front`, `back`, `createdAt`, `updatedAt`
+
+## DB Client
+
+Import the db instance from [src/db/index.ts](mdc:src/db/index.ts):
+
+```ts
+import { db } from "@/db";
+import { decksTable, cardsTable } from "@/db/schema";
+```
+
+## Querying
+
+```ts
+// ✅ GOOD — Drizzle query builder
+const decks = await db.select().from(decksTable).where(eq(decksTable.clerkUserId, userId));
+
+// ❌ BAD — raw SQL
+const decks = await db.execute(sql`SELECT * FROM decks WHERE clerk_user_id = ${userId}`);
+```
+
+## Mutations
+
+```ts
+// ✅ GOOD
+await db.insert(cardsTable).values({ deckId, front, back });
+await db.update(decksTable).set({ name }).where(eq(decksTable.id, id));
+await db.delete(cardsTable).where(eq(cardsTable.id, id));
+```
+
+## Relations
+
+Use `with` for joined queries via the defined relations (`decksRelations`, `cardsRelations`):
+
+```ts
+const deckWithCards = await db.query.decksTable.findFirst({
+  where: eq(decksTable.id, deckId),
+  with: { cards: true },
+});
+```

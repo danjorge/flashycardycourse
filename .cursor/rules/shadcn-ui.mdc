@@ -1,0 +1,42 @@
+---
+description: shadcn/ui usage conventions for this project
+alwaysApply: true
+---
+
+# shadcn/ui
+
+This project uses [shadcn/ui](https://ui.shadcn.com/) for all UI elements. Never use raw HTML elements or other component libraries when a shadcn/ui component exists for the use case.
+
+## Initialization
+
+If shadcn/ui is not yet set up in the project, run:
+
+```bash
+npx shadcn@latest init
+```
+
+## Adding Components
+
+Before using a component, check whether it is already installed under `components/ui/`. If it is not, add it with:
+
+```bash
+npx shadcn@latest add <component-name>
+```
+
+Example — adding the Button component:
+
+```bash
+npx shadcn@latest add button
+```
+
+## Usage
+
+Import components from the local `components/ui/` path, not from an npm package:
+
+```tsx
+// ✅ GOOD
+import { Button } from "@/components/ui/button";
+
+// ❌ BAD
+import { Button } from "shadcn-ui";
+```

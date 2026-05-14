@@ -1,0 +1,71 @@
+---
+description: Data access and mutation patterns — server components for reads, server actions for writes, Zod for validation
+alwaysApply: true
+---
+
+# Data Access Patterns
+
+## Data Retrieval — Server Components Only
+
+All database reads must happen in Server Components. Never fetch data in Client Components.
+
+```tsx
+// ✅ GOOD — async Server Component
+export default async function DeckList() {
+  const { userId } = await auth();
+  if (!userId) redirect("/sign-in");
+  const decks = await db.select().from(decksTable).where(eq(decksTable.clerkUserId, userId));
+  return <DeckListClient decks={decks} />;
+}
+
+// ❌ BAD — reading data inside a Client Component
+"use client";
+useEffect(() => { fetch("/api/decks").then(...) }, []);
+```
+
+## Mutations — Server Actions Only
+
+All inserts, updates, and deletes must live in a `actions.ts` file co-located with the feature. Put `"use server"` at the top of the file, not per-function.
+
+```
+src/app/decks/
+  page.tsx        ← Server Component (reads)
+  actions.ts      ← Server Actions (writes)
+  DeckList.tsx    ← Client Component (UI interactions)
+```
+
+Never use API routes for mutations.
+
+## Validation — Zod + TypeScript Types
+
+Every action must validate input with Zod. Export the schema and its inferred type so Client Components can use it for form state. Never use `FormData` as a parameter type.
+
+```ts
+// actions.ts
+"use server";
+import { z } from "zod";
+import { auth } from "@clerk/nextjs/server";
+
+export const createDeckSchema = z.object({
+  name: z.string().min(1),
+  description: z.string().optional(),
+});
+
+export type CreateDeckInput = z.infer<typeof createDeckSchema>;
+
+export async function createDeck(input: CreateDeckInput) {
+  const { userId } = await auth();
+  if (!userId) return { success: false, error: "Unauthenticated" } as const;
+
+  const parsed = createDeckSchema.safeParse(input);
+  if (!parsed.success) return { success: false, error: parsed.error.flatten() } as const;
+
+  await db.insert(decksTable).values({ clerkUserId: userId, ...parsed.data });
+  return { success: true } as const;
+}
+
+// ❌ BAD — untyped FormData, no validation
+export async function createDeck(formData: FormData) {
+  await db.insert(decksTable).values({ name: formData.get("name") as string });
+}
+```
