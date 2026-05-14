@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Poppins } from "next/font/google";
 import { ClerkProvider, SignInButton, SignUpButton, Show, UserButton } from "@clerk/nextjs";
-import { dark } from "@clerk/themes";
+import { dark } from "@clerk/ui/themes";
 import { Button } from "@/components/ui/button";
 import "./globals.css";
 
@@ -27,7 +27,7 @@ export default function RootLayout({
       className={`${poppins.variable} dark antialiased`}
     >
       <body className="min-h-dvh flex flex-col bg-background text-foreground" suppressHydrationWarning>
-        <ClerkProvider appearance={{ baseTheme: dark }}>
+        <ClerkProvider appearance={{ theme: dark }}>
           <header className="sticky top-0 z-50 border-b border-border bg-background/80 backdrop-blur-sm">
             <div className="mx-auto flex h-14 max-w-5xl items-center justify-between px-6">
               <span className="text-sm font-semibold tracking-tight">FlashyCardy</span>
