@@ -1,8 +1,7 @@
 import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
-import { eq } from "drizzle-orm";
-import { db } from "@/db";
-import { decksTable } from "@/db/schema";
+import Link from "next/link";
+import { getDecksByUser } from "@/db/queries/decks";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -16,10 +15,7 @@ export default async function DashboardPage() {
   const { userId } = await auth();
   if (!userId) redirect("/");
 
-  const decks = await db
-    .select()
-    .from(decksTable)
-    .where(eq(decksTable.clerkUserId, userId));
+  const decks = await getDecksByUser(userId);
 
   return (
     <main className="mx-auto flex w-full max-w-5xl flex-1 flex-col gap-8 px-6 py-10">
@@ -34,40 +30,46 @@ export default async function DashboardPage() {
       </div>
 
       {decks.length === 0 ? (
-        <div className="flex flex-1 flex-col items-center justify-center gap-4 rounded-xl border border-dashed border-border py-24 text-center">
-          <p className="text-lg font-medium">No decks yet</p>
-          <p className="text-sm text-muted-foreground">
-            Create your first deck to start studying.
-          </p>
-          <Button>New Deck</Button>
-        </div>
+        <Card className="flex flex-1 flex-col items-center justify-center border-dashed py-24 text-center">
+          <CardContent className="flex flex-col items-center gap-4">
+            <p className="text-lg font-medium">No decks yet</p>
+            <p className="text-sm text-muted-foreground">
+              Create your first deck to start studying.
+            </p>
+            <Button>New Deck</Button>
+          </CardContent>
+        </Card>
       ) : (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {decks.map((deck) => (
-            <Card
+            <Link
               key={deck.id}
-              className="cursor-pointer transition-colors hover:bg-accent"
+              href={`/decks/${deck.id}`}
+              className="block focus:outline-none focus:ring-2 focus:ring-ring rounded-lg"
             >
-              <CardHeader>
-                <CardTitle className="line-clamp-1">{deck.name}</CardTitle>
-                {deck.description && (
-                  <CardDescription className="line-clamp-2">
-                    {deck.description}
-                  </CardDescription>
-                )}
-              </CardHeader>
-              <CardContent>
-                <p className="text-xs text-muted-foreground">
-                  Created{" "}
-                  {new Intl.DateTimeFormat("en-US", {
-                    month: "short",
-                    day: "numeric",
-                    year: "numeric",
-                  }).format(new Date(deck.createdAt))}
-                </p>
-              </CardContent>
-            </Card>
+              <Card className="h-full cursor-pointer transition-colors hover:bg-accent">
+                <CardHeader>
+                  <CardTitle className="line-clamp-1">{deck.name}</CardTitle>
+                  {deck.description && (
+                    <CardDescription className="line-clamp-2">
+                      {deck.description}
+                    </CardDescription>
+                  )}
+                </CardHeader>
+                <CardContent>
+                  <p className="text-xs text-muted-foreground">
+                    Updated{" "}
+                    {new Intl.DateTimeFormat("en-US", {
+                      month: "short",
+                      day: "numeric",
+                      year: "numeric",
+                    }).format(new Date(deck.updatedAt))}
+                  </p>
+                </CardContent>
+              </Card>
+            </Link>
           ))}
+     
         </div>
       )}
     </main>

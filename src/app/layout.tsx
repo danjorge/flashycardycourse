@@ -33,10 +33,10 @@ export default function RootLayout({
               <span className="text-sm font-semibold tracking-tight">FlashyCardy</span>
               <div className="flex items-center gap-2">
                 <Show when="signed-out">
-                  <SignInButton mode="modal">
+                  <SignInButton mode="modal" forceRedirectUrl="/dashboard">
                     <Button variant="ghost" size="sm">Sign In</Button>
                   </SignInButton>
-                  <SignUpButton mode="modal">
+                  <SignUpButton mode="modal" forceRedirectUrl="/dashboard">
                     <Button size="sm">Sign Up</Button>
                   </SignUpButton>
                 </Show>

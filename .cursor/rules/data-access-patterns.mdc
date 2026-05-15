@@ -1,22 +1,75 @@
 ---
-description: Data access and mutation patterns — server components for reads, server actions for writes, Zod for validation
 alwaysApply: true
 ---
-
 # Data Access Patterns
+
+## Query Helpers — `src/db/queries/`
+
+All database reads and writes must go through helper functions in `src/db/queries/`. Never write raw Drizzle queries inline in Server Components or Server Actions.
+
+Organize files by domain:
+
+```
+src/db/queries/
+  decks.ts    ← all deck reads & writes
+  cards.ts    ← all card reads & writes
+```
+
+Each helper takes the minimum required arguments (including `userId` where ownership must be enforced) and encapsulates the Drizzle query:
+
+```ts
+// src/db/queries/decks.ts
+import { db } from "@/db";
+import { decksTable } from "@/db/schema";
+import { eq, and } from "drizzle-orm";
+
+export async function getDecksByUser(userId: string) {
+  return db.select().from(decksTable).where(eq(decksTable.clerkUserId, userId));
+}
+
+export async function getDeckById(deckId: string, userId: string) {
+  return db
+    .select()
+    .from(decksTable)
+    .where(and(eq(decksTable.id, deckId), eq(decksTable.clerkUserId, userId)))
+    .then((rows) => rows[0] ?? null);
+}
+
+export async function createDeck(userId: string, name: string, description?: string) {
+  return db.insert(decksTable).values({ clerkUserId: userId, name, description });
+}
+
+export async function updateDeck(deckId: string, userId: string, patch: { name?: string; description?: string }) {
+  return db
+    .update(decksTable)
+    .set(patch)
+    .where(and(eq(decksTable.id, deckId), eq(decksTable.clerkUserId, userId)));
+}
+
+export async function deleteDeck(deckId: string, userId: string) {
+  return db
+    .delete(decksTable)
+    .where(and(eq(decksTable.id, deckId), eq(decksTable.clerkUserId, userId)));
+}
+```
 
 ## Data Retrieval — Server Components Only
 
-All database reads must happen in Server Components. Never fetch data in Client Components.
+All database reads must happen in Server Components via query helpers. Never fetch data in Client Components.
 
 ```tsx
-// ✅ GOOD — async Server Component
+// ✅ GOOD — Server Component calls a query helper
+import { getDecksByUser } from "@/db/queries/decks";
+
 export default async function DeckList() {
   const { userId } = await auth();
   if (!userId) redirect("/sign-in");
-  const decks = await db.select().from(decksTable).where(eq(decksTable.clerkUserId, userId));
+  const decks = await getDecksByUser(userId);
   return <DeckListClient decks={decks} />;
 }
+
+// ❌ BAD — inline Drizzle query in a Server Component
+const decks = await db.select().from(decksTable).where(eq(decksTable.clerkUserId, userId));
 
 // ❌ BAD — reading data inside a Client Component
 "use client";
@@ -25,12 +78,12 @@ useEffect(() => { fetch("/api/decks").then(...) }, []);
 
 ## Mutations — Server Actions Only
 
-All inserts, updates, and deletes must live in a `actions.ts` file co-located with the feature. Put `"use server"` at the top of the file, not per-function.
+All inserts, updates, and deletes must live in an `actions.ts` file co-located with the feature. Put `"use server"` at the top of the file, not per-function. Actions call query helpers — they never write raw Drizzle queries directly.
 
 ```
 src/app/decks/
-  page.tsx        ← Server Component (reads)
-  actions.ts      ← Server Actions (writes)
+  page.tsx        ← Server Component (reads via query helpers)
+  actions.ts      ← Server Actions (calls query helpers for writes)
   DeckList.tsx    ← Client Component (UI interactions)
 ```
 
@@ -45,6 +98,7 @@ Every action must validate input with Zod. Export the schema and its inferred ty
 "use server";
 import { z } from "zod";
 import { auth } from "@clerk/nextjs/server";
+import { createDeck } from "@/db/queries/decks";
 
 export const createDeckSchema = z.object({
   name: z.string().min(1),
@@ -53,18 +107,18 @@ export const createDeckSchema = z.object({
 
 export type CreateDeckInput = z.infer<typeof createDeckSchema>;
 
-export async function createDeck(input: CreateDeckInput) {
+export async function createDeckAction(input: CreateDeckInput) {
   const { userId } = await auth();
   if (!userId) return { success: false, error: "Unauthenticated" } as const;
 
   const parsed = createDeckSchema.safeParse(input);
   if (!parsed.success) return { success: false, error: parsed.error.flatten() } as const;
 
-  await db.insert(decksTable).values({ clerkUserId: userId, ...parsed.data });
+  await createDeck(userId, parsed.data.name, parsed.data.description);
   return { success: true } as const;
 }
 
-// ❌ BAD — untyped FormData, no validation
+// ❌ BAD — raw Drizzle query inside an action, untyped FormData, no validation
 export async function createDeck(formData: FormData) {
   await db.insert(decksTable).values({ name: formData.get("name") as string });
 }

@@ -3,9 +3,49 @@ description: shadcn/ui usage conventions for this project
 alwaysApply: true
 ---
 
-# shadcn/ui
+# shadcn/ui — Mandatory UI Library
 
-This project uses [shadcn/ui](https://ui.shadcn.com/) for all UI elements. Never use raw HTML elements or other component libraries when a shadcn/ui component exists for the use case.
+**shadcn/ui is the ONLY permitted UI library in this project.** There are zero exceptions.
+
+- **No custom UI components.** Do not create bespoke styled divs, hand-rolled form controls, or any other custom UI primitives. Every visible UI element must be composed from shadcn/ui components.
+- **No raw HTML elements** (`<button>`, `<input>`, `<select>`, `<dialog>`, etc.) when a shadcn/ui equivalent exists.
+- **No other component libraries** (MUI, Chakra, Radix primitives imported directly, Headless UI, etc.).
+
+If a shadcn/ui component does not yet cover a use case, open a discussion rather than inventing a custom component.
+
+**MANDATORY Rules:**
+- ❌ NEVER create custom buttons, inputs, cards, modals, or any UI elements
+- ❌ NEVER use raw HTML elements (div, button, input) for UI
+- ❌ NEVER write custom CSS for components beyond Tailwind utilities
+- ✅ ALWAYS use shadcn/ui components for every UI element
+- ✅ ALWAYS compose complex UI by combining shadcn/ui components
+- ✅ This project is in dark mode so make sure there are no dark colored text on dark backgrounds (and vice versa)
+
+## Clerk Authentication UI
+
+Clerk's built-in `<SignInButton>` and `<SignUpButton>` components **must** render as shadcn/ui `<Button>` elements using the `asChild` prop. Sign-in and sign-up flows **must** open in a Clerk modal — never navigate to a dedicated sign-in/sign-up page.
+
+```tsx
+// ✅ GOOD — shadcn Button + Clerk modal
+import { SignInButton, SignUpButton } from "@clerk/nextjs";
+import { Button } from "@/components/ui/button";
+
+<SignInButton mode="modal">
+  <Button>Sign in</Button>
+</SignInButton>
+
+<SignUpButton mode="modal">
+  <Button>Sign up</Button>
+</SignUpButton>
+
+// ❌ BAD — Clerk's default anchor/button styling
+<SignInButton />
+
+// ❌ BAD — navigates away instead of using modal
+<SignInButton mode="redirect">
+  <Button>Sign in</Button>
+</SignInButton>
+```
 
 ## Initialization
 

@@ -14,10 +14,10 @@ export default async function Home() {
       </div>
       <Show when="signed-out">
         <div className="flex items-center gap-3">
-          <SignInButton mode="modal">
+          <SignInButton mode="modal" forceRedirectUrl="/dashboard">
             <Button variant="outline">Sign In</Button>
           </SignInButton>
-          <SignUpButton mode="modal">
+          <SignUpButton mode="modal" forceRedirectUrl="/dashboard">
             <Button>Sign Up</Button>
           </SignUpButton>
         </div>
