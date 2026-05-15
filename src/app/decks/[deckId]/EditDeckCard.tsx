@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -22,6 +23,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import { BookOpen, Pencil } from "lucide-react";
 import { updateDeckAction } from "./actions";
 
 interface EditDeckCardProps {
@@ -73,18 +75,23 @@ export function EditDeckCard({
 
   return (
     <Card>
-      <CardHeader>
-        <CardTitle className="text-2xl">{name}</CardTitle>
-        {description && <CardDescription>{description}</CardDescription>}
-      </CardHeader>
-      <CardContent>
-        <p className="text-sm text-muted-foreground">
-          {cardCount} {cardCount === 1 ? "card" : "cards"}
-        </p>
-      </CardContent>
-      <CardFooter>
+      <CardHeader className="flex flex-row items-start justify-between gap-4">
+        <div className="flex flex-col gap-1.5">
+          <CardTitle className="text-2xl">{name}</CardTitle>
+          {description && <CardDescription>{description}</CardDescription>}
+        </div>
         <Dialog open={open} onOpenChange={handleOpenChange}>
-          <DialogTrigger render={<Button variant="outline" size="sm" />}>
+          <DialogTrigger
+            render={
+              <Button
+                variant="ghost"
+                size="sm"
+                className="-mt-1 -mr-2 shrink-0"
+                title="Edit deck"
+              />
+            }
+          >
+            <Pencil className="size-4" />
             Edit
           </DialogTrigger>
           <DialogContent className="sm:max-w-md">
@@ -134,7 +141,25 @@ export function EditDeckCard({
             </DialogFooter>
           </DialogContent>
         </Dialog>
-      </CardFooter>
+      </CardHeader>
+      <CardContent>
+        <p className="text-sm text-muted-foreground">
+          {cardCount} {cardCount === 1 ? "card" : "cards"}
+        </p>
+      </CardContent>
+      {cardCount > 0 && (
+        <CardFooter>
+          <Button
+            render={<Link href={`/decks/${deckId}/study`} />}
+            nativeButton={false}
+            className="w-full"
+            title="Start a study session for this deck"
+          >
+            <BookOpen className="size-4" />
+            Study
+          </Button>
+        </CardFooter>
+      )}
     </Card>
   );
 }

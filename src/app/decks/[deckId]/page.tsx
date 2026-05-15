@@ -46,7 +46,7 @@ export default async function DeckPage({
           description={deck.description}
           cardCount={cards.length}
         />
-        <div className="flex justify-end">
+        <div className="flex items-center justify-end gap-2">
           <AddCardDialog deckId={deckIdNum} />
         </div>
       </div>

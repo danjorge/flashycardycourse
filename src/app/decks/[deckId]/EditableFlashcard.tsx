@@ -31,6 +31,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { Pencil, Trash2 } from "lucide-react";
 import { updateCardAction, deleteCardAction } from "./actions";
 
 interface EditableFlashcardProps {
@@ -101,9 +102,10 @@ export function EditableFlashcard({
         </p>
         <p className="text-sm text-muted-foreground">{back}</p>
       </CardContent>
-      <CardFooter>
+      <CardFooter className="gap-2">
         <Dialog open={open} onOpenChange={handleOpenChange}>
-          <DialogTrigger render={<Button variant="outline" size="sm" />}>
+          <DialogTrigger render={<Button variant="outline" size="sm" className="flex-1" />}>
+            <Pencil className="size-3.5" />
             Edit
           </DialogTrigger>
           <DialogContent className="sm:max-w-md">
@@ -140,53 +142,53 @@ export function EditableFlashcard({
               {error && <p className="text-sm text-destructive">{error}</p>}
             </div>
 
-            <DialogFooter className="flex-col-reverse gap-2 sm:flex-row sm:justify-between">
-              <AlertDialog>
-                <AlertDialogTrigger
-                  render={
-                    <Button
-                      variant="destructive"
-                      disabled={isPending || isDeleting}
-                    />
-                  }
-                >
-                  {isDeleting ? "Removing..." : "Remove card"}
-                </AlertDialogTrigger>
-                <AlertDialogContent>
-                  <AlertDialogHeader>
-                    <AlertDialogTitle>Remove this card?</AlertDialogTitle>
-                    <AlertDialogDescription>
-                      This action cannot be undone. The card will be permanently
-                      deleted from this deck.
-                    </AlertDialogDescription>
-                  </AlertDialogHeader>
-                  <AlertDialogFooter>
-                    <AlertDialogCancel>Cancel</AlertDialogCancel>
-                    <AlertDialogAction
-                      onClick={handleDelete}
-                      className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                    >
-                      Remove
-                    </AlertDialogAction>
-                  </AlertDialogFooter>
-                </AlertDialogContent>
-              </AlertDialog>
-
-              <div className="flex gap-2">
-                <Button
-                  variant="outline"
-                  onClick={() => handleOpenChange(false)}
-                  disabled={isPending || isDeleting}
-                >
-                  Cancel
-                </Button>
-                <Button onClick={handleSave} disabled={isPending || isDeleting}>
-                  {isPending ? "Saving..." : "Update"}
-                </Button>
-              </div>
+            <DialogFooter>
+              <Button
+                variant="outline"
+                onClick={() => handleOpenChange(false)}
+                disabled={isPending}
+              >
+                Cancel
+              </Button>
+              <Button onClick={handleSave} disabled={isPending}>
+                {isPending ? "Saving..." : "Update"}
+              </Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
+
+        <AlertDialog>
+          <AlertDialogTrigger
+            render={
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={isDeleting}
+                className="text-destructive hover:text-destructive"
+              />
+            }
+          >
+            <Trash2 className="size-3.5" />
+          </AlertDialogTrigger>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Remove this card?</AlertDialogTitle>
+              <AlertDialogDescription>
+                This action cannot be undone. The card will be permanently
+                deleted from this deck.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={handleDelete}
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              >
+                Remove
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </CardFooter>
     </Card>
   );
