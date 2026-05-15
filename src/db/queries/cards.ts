@@ -19,6 +19,44 @@ export async function createCard(
   return db.insert(cardsTable).values({ deckId, front, back });
 }
 
+export async function updateCard(
+  cardId: number,
+  deckId: number,
+  userId: string,
+  patch: { front?: string; back?: string }
+) {
+  const deck = await db
+    .select()
+    .from(decksTable)
+    .where(and(eq(decksTable.id, deckId), eq(decksTable.clerkUserId, userId)))
+    .then((rows) => rows[0] ?? null);
+
+  if (!deck) return null;
+
+  return db
+    .update(cardsTable)
+    .set(patch)
+    .where(and(eq(cardsTable.id, cardId), eq(cardsTable.deckId, deckId)));
+}
+
+export async function deleteCard(
+  cardId: number,
+  deckId: number,
+  userId: string
+) {
+  const deck = await db
+    .select()
+    .from(decksTable)
+    .where(and(eq(decksTable.id, deckId), eq(decksTable.clerkUserId, userId)))
+    .then((rows) => rows[0] ?? null);
+
+  if (!deck) return null;
+
+  return db
+    .delete(cardsTable)
+    .where(and(eq(cardsTable.id, cardId), eq(cardsTable.deckId, deckId)));
+}
+
 export async function getCardsByDeck(deckId: number, userId: string) {
   const deck = await db
     .select()

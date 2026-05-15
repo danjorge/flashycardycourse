@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -53,7 +54,10 @@ export function AddCardDialog({ deckId }: AddCardDialogProps) {
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogTrigger render={<Button />}>Add Card</DialogTrigger>
+      <DialogTrigger render={<Button />}>
+        <Plus className="h-4 w-4" />
+        Add Card
+      </DialogTrigger>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>Add New Card</DialogTitle>
