@@ -24,7 +24,8 @@ export async function createDeck(
 ) {
   return db
     .insert(decksTable)
-    .values({ clerkUserId: userId, name, description });
+    .values({ clerkUserId: userId, name, description })
+    .returning();
 }
 
 export async function updateDeck(

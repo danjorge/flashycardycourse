@@ -1,0 +1,62 @@
+---
+alwaysApply: true
+---
+
+# Clerk Billing
+
+All subscriptions and payments are handled by Clerk Billing. Never use Stripe directly or any other payment library.
+
+## Plans & Features
+
+**Plans:** `free_user`, `pro`
+
+**Features:** `3_deck_limit`, `unlimited_decks`, `ai_flashcard_generation`
+
+## Gating Access
+
+### Server Components & Actions — use `has()`
+
+```ts
+import { auth } from '@clerk/nextjs/server'
+
+const { has } = await auth()
+
+// Check by plan
+const isPro = has({ plan: 'pro' })
+
+// Check by feature
+const canGenerateAI = has({ feature: 'ai_flashcard_generation' })
+const hasUnlimitedDecks = has({ feature: 'unlimited_decks' })
+```
+
+### Client / React Components — use `<Protect>`
+
+```tsx
+import { Protect } from '@clerk/nextjs'
+
+// By plan
+<Protect plan="pro" fallback={<UpgradeCTA />}>
+  <ProFeature />
+</Protect>
+
+// By feature
+<Protect feature="ai_flashcard_generation" fallback={<UpgradeCTA />}>
+  <AIGenerator />
+</Protect>
+```
+
+## Pricing Page
+
+Use Clerk's `<PricingTable />` component on a dedicated `/pricing` page. Do not build a custom pricing table.
+
+```tsx
+import { PricingTable } from '@clerk/nextjs'
+
+export default function PricingPage() {
+  return (
+    <div className="max-w-3xl mx-auto px-4">
+      <PricingTable />
+    </div>
+  )
+}
+```
